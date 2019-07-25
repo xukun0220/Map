@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ol加载ArcGIS本地切片</title>
+    <link rel="stylesheet" href="ol.css">
+    <script src="ol.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+        window.onload = function () {
+            // 地图投影
+            
+            var projection = ol.proj.get('EPSG:4326');
+            // 瓦片地址
+           // 瓦片地址格式：http://localhost:6080/arcgis/rest/services/Test/Beijing/MapServer/tile/{z}/{y}/{x}
+            var tileUrl = "你的瓦片服务地址";
+            // 原点
+            var origin = [-400.0, 400.0];
+            // 分辨率
+            var resolutions = [
+               7.6142752186568962e-005,
+			   3.8071376093284481e-005,
+			   1.903568804664224e-005,
+			   9.5178440233211202e-006,
+			   4.7589220116605601e-006,
+			   2.3794610058302801e-006,
+			   1.18973050291514e-006
+            ];
+            // 地图范围
+           // var fullExtent = [114.35806006193161,23.016552561747606,114.57328646488625,23.215949180689137];
+            var tileGrid = new ol.tilegrid.TileGrid({
+                tileSize: 256,
+                origin: origin,
+                //extent: fullExtent,
+                resolutions: resolutions
+            });
+            // 瓦片数据源
+            var tileArcGISXYZ = new ol.source.XYZ({
+               projection: projection,
+                            tileGrid: tileGrid,
+                            tileUrlFunction: function (tileCoord, pixelRatio, proj) {
+                                var z = zeroPad(tileCoord[0], 2, 10);
+                                var x = zeroPad(tileCoord[1], 8, 16);
+                                var y = zeroPad(-tileCoord[2] - 1, 8, 16);
+                                return "http://localhost:8044:TestMapTile/" + "L" + z + "/" + "R" + y + "/" + "C" + x + ".jpg";
+                            }
+            });
+ 
+            var map = new ol.Map({
+                target: 'map',
+                layers: [
+                     new ol.layer.Tile({
+                         source: new ol.source.OSM(),
+                     }),
+                     // 瓦片图层
+                    new ol.layer.Tile({
+                        source: tileArcGISXYZ
+                    }),
+                ],
+                view: new ol.View({
+                    center: [115.807178,28.665558],
+                    resolutions: resolutions,
+                    // 注意：此处指定缩放级别不能通过zoom来指定，指定了也无效，必须通过resolution来指定
+                    // 官方API说明：
+                    // Resolutions to determine the resolution constraint. 
+                    // If set the maxResolution, minResolution, minZoom, maxZoom, and zoomFactor options are ignored.
+                    resolution: 4.7589220116605601e-006,
+                    projection: projection,
+                    //extent: fullExtent
+                })
+            });
+        };
+     function zeroPad(num, len, radix) {
+                var str = num.toString(radix || 10);
+                while (str.length < len) {
+                    str = "0" + str;
+                }
+                return str;
+            }
+	</script>
+</head>
+<body>
+    <div id="map"></div>
+</body>
+</html>
